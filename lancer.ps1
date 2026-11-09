@@ -30,7 +30,23 @@ if ($Code -ne 0) {
     exit 2
 }
 
-# 3. Avertissement pour la version internet
+# 3. Windows à jour ? Les failles qui permettraient à un virus de SORTIR du bac à sable
+#    sont corrigées par Windows Update : sans mises à jour récentes, on bloque
+#    (lancement seulement si l'utilisateur insiste ; bouton par défaut = Non).
+$DerniereMaj = $null
+try { $DerniereMaj = (Get-HotFix -ErrorAction Stop | Where-Object InstalledOn | Sort-Object InstalledOn -Descending | Select-Object -First 1).InstalledOn } catch { }
+if ($DerniereMaj -and ((Get-Date) - $DerniereMaj).TotalDays -gt 45) {
+    $jours = [int]((Get-Date) - $DerniereMaj).TotalDays
+    $rep = [System.Windows.Forms.MessageBox]::Show(
+        "DANGER : Windows n'a pas été mis à jour depuis $jours jours.`n`n" +
+        "Les mises à jour corrigent les failles qui permettraient à un virus de sortir du bac à sable.`n`n" +
+        "Fais d'abord : Paramètres > Windows Update > Rechercher des mises à jour, puis redémarre.`n`n" +
+        "Lancer quand même (déconseillé) ?",
+        'Bac à sable', 'YesNo', 'Error', 'Button2')
+    if ($rep -ne 'Yes') { exit 3 }
+}
+
+# 4. Avertissement pour la version internet
 if ($Profil -eq 'Internet') {
     $rep = Fenetre "ATTENTION : internet sera ACTIF dans le bac à sable.`n`nNe te connecte JAMAIS à un vrai compte (Discord, mail, Steam, banque…) dans cette fenêtre.`n`nPour tester un fichier, préfère `"Bac à sable (sécurisé)`".`n`nContinuer ?" 'YesNo' 'Warning'
     if ($rep -ne 'Yes') { exit 0 }

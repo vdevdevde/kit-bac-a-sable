@@ -16,7 +16,7 @@
 # ====================================================================
 param([switch]$Rapide, [switch]$SansMaj)
 
-$VersionKit = '1.2.0'
+$VersionKit = '1.3.0'
 
 # Copier-coller entre ton PC et le bac à sable : 'Disable' (le plus sûr) ou 'Enable'.
 # Activé, un programme dans le bac à sable peut lire ce que tu copies sur ton vrai PC
@@ -141,6 +141,8 @@ Une seule fenêtre de bac à sable peut être ouverte à la fois.
   virus "normal", il ne peut PAS sortir. Mais rien n'est sûr à 100 % :
   * De très rares failles ("évasion de machine virtuelle") ont existé.
     Microsoft les corrige dans les mises à jour : garde Windows À JOUR.
+    Si Windows n'a pas été mis à jour depuis plus de 45 jours, le
+    raccourci refuse de lancer le bac à sable (sauf si tu insistes).
   * La version internet laisse le virus parler à internet : il ne peut
     pas toucher ton PC, mais il peut attaquer d'autres appareils de ta
     box (rare). Utilise-la le moins possible.
