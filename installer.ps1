@@ -145,6 +145,15 @@ if (-not $Famille) {
 }
 
 # ================================================================ FAMILLE
+# VirtualBox n'existe pas pour les PC à processeur ARM (ex. portables Snapdragon).
+$Arm = ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64' -or [int]$cpu.Architecture -eq 12)
+if ($Arm) {
+    Stop-Installation ("Ce PC a un processeur ARM (par exemple Snapdragon) avec Windows Famille.`n" +
+        "Le bac à sable de Microsoft n'existe pas sur Windows Famille, et VirtualBox ne fonctionne pas`n" +
+        "sur les processeurs ARM : il n'y a malheureusement aucune solution gratuite et sûre ici.`n" +
+        "Seule possibilité : passer à Windows 11 Pro (Paramètres > Système > Activation, payant),`n" +
+        "puis relancer Installer.bat. En attendant : vérifie tes fichiers sur virustotal.com.")
+}
 Titre 'Mode Famille : machine virtuelle jetable (VirtualBox)'
 Write-Host '  Windows Famille ne contient pas le bac à sable de Microsoft.'
 Write-Host '  On crée à la place un Windows jetable dans VirtualBox (gratuit), avec les'

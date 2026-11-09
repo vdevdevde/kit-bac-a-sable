@@ -16,7 +16,7 @@
 # ====================================================================
 param([switch]$Rapide, [switch]$SansMaj)
 
-$VersionKit = '1.6.0'
+$VersionKit = '1.7.0'
 
 # Copier-coller entre ton PC et le bac à sable : 'Disable' (le plus sûr) ou 'Enable'.
 # Activé, un programme dans le bac à sable peut lire ce que tu copies sur ton vrai PC

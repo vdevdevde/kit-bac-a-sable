@@ -12,6 +12,8 @@ Le kit se **met à jour tout seul** : à chaque ouverture, il te propose la nouv
   - **Pro, Entreprise, Éducation** : le kit utilise **Windows Sandbox**, intégré à Windows.
   - **Famille (Home)** : le kit utilise le **mode Famille**, un Windows jetable dans **VirtualBox** (gratuit). L'installeur **installe VirtualBox tout seul** (site officiel, fichier vérifié). Il t'ouvre aussi la page de Microsoft pour télécharger l'image Windows 11 d'évaluation gratuite (un formulaire à remplir), la retrouve tout seul dans tes Téléchargements, puis prépare la machine (30 à 90 minutes, une seule fois). 🧪 *Mode encore en test.*
 - La **virtualisation activée** dans le BIOS (c'est le cas sur la plupart des PC récents ; l'installeur vérifie).
+- ❌ **Seul cas impossible : un PC à processeur ARM** (portables Snapdragon) **sous Windows Famille**. Le bac à sable de Microsoft n'existe pas sur Famille, et VirtualBox ne marche pas sur ARM. L'installeur le détecte et l'explique.
+- **Windows 11 en mode S** bloque tous les scripts : il faut d'abord en sortir (gratuit) : Paramètres → Système → Activation → *Quitter le mode S*.
 - Mode Famille : 8 Go de mémoire et 40 Go libres sur C:.
 
 ## 📥 Installer (5 minutes)
@@ -24,6 +26,8 @@ Le kit se **met à jour tout seul** : à chaque ouverture, il te propose la nouv
 4. **Redémarre** le PC.
 
 Trois raccourcis apparaissent sur ton bureau : **Bac à sable (sécurisé)**, **Bac à sable (internet)** et **Fichiers à tester**.
+
+⚠️ **Ne déplace pas le dossier du kit après l'installation**, sinon les raccourcis ne marchent plus. Si tu l'as déplacé, relance simplement `Installer.bat` depuis le nouvel endroit.
 
 ## 🕹️ Utiliser (à chaque fois)
 
