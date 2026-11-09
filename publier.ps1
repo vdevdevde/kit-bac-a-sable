@@ -6,7 +6,9 @@
 #  Avant : augmente $VersionKit dans mettre_a_jour.ps1 (ex. 1.2.0 -> 1.3.0),
 #          puis enregistre avec git (git add -A ; git commit -m "...").
 #  Ensuite : double-clique sur "Publier une version.bat".
+#  (-Notes "..." permet de donner les nouveautés sans qu'on te les demande.)
 # ====================================================================
+param([string]$Notes)
 $ErrorActionPreference = 'Stop'
 $Racine = $PSScriptRoot
 Set-Location $Racine
@@ -19,13 +21,18 @@ $Tag = "v$Version"
 Write-Host "Version à publier : $Version"
 
 if (git status --porcelain) { Arret "Des modifications ne sont pas enregistrées. Fais d'abord : git add -A ; git commit -m `"...`"" }
-if (git tag --list $Tag) { Arret "La version $Version existe déjà. Augmente `$VersionKit dans mettre_a_jour.ps1." }
+# Version déjà publiée sur GitHub ? (stderr de gh ignoré sans planter PowerShell 5.1)
+$ErrorActionPreference = 'Continue'
+gh release view $Tag 2>&1 | Out-Null
+$DejaPubliee = ($LASTEXITCODE -eq 0)
+$ErrorActionPreference = 'Stop'
+if ($DejaPubliee) { Arret "La version $Version est déjà publiée. Augmente `$VersionKit dans mettre_a_jour.ps1." }
 
 $Fichiers = @('mettre_a_jour.ps1', 'Mettre a jour.bat', 'maj_auto.ps1', 'lancer.ps1',
               'installer.ps1', 'Installer.bat', 'Activer le bac a sable.bat', 'README.md')
 foreach ($f in $Fichiers) { if (-not (Test-Path (Join-Path $Racine $f))) { Arret "Fichier manquant : $f" } }
 
-$Notes = Read-Host 'Nouveautés de cette version (une phrase)'
+if (-not $Notes) { $Notes = Read-Host 'Nouveautés de cette version (une phrase)' }
 if (-not $Notes) { $Notes = "Version $Version" }
 
 $Zip = Join-Path $env:TEMP "BacASable-$Version.zip"

@@ -20,11 +20,12 @@ if (-not (Test-Path (Join-Path $env:WINDIR 'System32\WindowsSandbox.exe'))) {
 }
 
 # 1. Mise à jour (silencieuse si rien de neuf ou pas d'internet)
-& (Join-Path $Racine 'maj_auto.ps1') -Silencieux | Out-Null
+try { & (Join-Path $Racine 'maj_auto.ps1') -Silencieux | Out-Null } catch { }
 
-# 2. Régénère + vérifie (lit la version éventuellement mise à jour)
-& (Join-Path $Racine 'mettre_a_jour.ps1') -Rapide *> $null
-if ($LASTEXITCODE -ne 0) {
+# 2. Régénère + vérifie (lit la version éventuellement mise à jour).
+#    Au moindre doute (erreur imprévue comprise), on ne lance PAS.
+try { & (Join-Path $Racine 'mettre_a_jour.ps1') -Rapide *> $null; $Code = $LASTEXITCODE } catch { $Code = 99 }
+if ($Code -ne 0) {
     Fenetre "Un réglage de sécurité n'est pas bon : le bac à sable n'a PAS été lancé.`n`nOuvre journal.txt dans $Racine pour voir le détail, ou double-clique sur `"Mettre a jour.bat`"." 'OK' 'Error' | Out-Null
     exit 2
 }

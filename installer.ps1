@@ -5,6 +5,17 @@
 #  3. active Windows Sandbox si besoin (Windows demande "Oui").
 # ====================================================================
 $Racine = $PSScriptRoot
+
+# Les fichiers extraits d'un .zip téléchargé portent la marque « vient d'internet » :
+# Windows redemanderait une confirmation à chaque double-clic. Tu as lancé cet
+# installeur en connaissance de cause, donc on retire cette marque, UNIQUEMENT sur
+# les fichiers du kit (jamais sur A_tester ni sur autre chose).
+foreach ($f in 'mettre_a_jour.ps1', 'Mettre a jour.bat', 'maj_auto.ps1', 'lancer.ps1',
+               'installer.ps1', 'Installer.bat', 'Activer le bac a sable.bat', 'README.md') {
+    $chemin = Join-Path $Racine $f
+    if (Test-Path -LiteralPath $chemin) { Unblock-File -LiteralPath $chemin -ErrorAction SilentlyContinue }
+}
+
 function Titre([string]$t) { Write-Host ''; Write-Host "== $t ==" -ForegroundColor Cyan }
 function Stop-Installation([string]$t) { Write-Host ''; Write-Host $t -ForegroundColor Red; exit 1 }
 
