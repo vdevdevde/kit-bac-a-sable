@@ -16,7 +16,7 @@
 # ====================================================================
 param([switch]$Rapide, [switch]$SansMaj)
 
-$VersionKit = '1.4.0'
+$VersionKit = '1.5.0'
 
 # Copier-coller entre ton PC et le bac à sable : 'Disable' (le plus sûr) ou 'Enable'.
 # Activé, un programme dans le bac à sable peut lire ce que tu copies sur ton vrai PC
@@ -113,6 +113,23 @@ vers le bureau du bac à sable, puis lance la copie.
 Une seule fenêtre de bac à sable peut être ouverte à la fois.
 
 --------------------------------------------------------------------
+2 bis) WINDOWS FAMILLE (HOME) : LE MODE FAMILLE
+--------------------------------------------------------------------
+  Windows Famille ne contient pas le bac à sable de Microsoft. Le kit
+  utilise alors une machine virtuelle jetable avec VirtualBox (gratuit),
+  préparée par Installer.bat. Les raccourcis marchent pareil, mais :
+  * Le dossier A_tester est dans "Ce PC" de la machine (lecteur réseau),
+    pas sur son bureau.
+  * Si la machine demande un mot de passe : bacasable
+  * Pour fermer : croix de la fenêtre -> "Éteindre la machine".
+    Dès qu'elle est éteinte, tout est effacé (retour à l'état propre).
+  * VirtualBox doit rester À JOUR : le raccourci refuse de lancer s'il
+    est en retard (sauf si tu insistes).
+  * La machine Windows est une version d'évaluation de Microsoft
+    (90 jours). Quand elle expire : relance Installer.bat, réponds O
+    pour supprimer l'ancienne machine, et elle est recréée.
+
+--------------------------------------------------------------------
 3) LES LIMITES (IMPORTANT)
 --------------------------------------------------------------------
   * Un virus peut détecter qu'il est dans un bac à sable et "faire
@@ -146,6 +163,8 @@ Une seule fenêtre de bac à sable peut être ouverte à la fois.
   * La version internet laisse le virus parler à internet : il ne peut
     pas toucher ton PC, mais il peut attaquer d'autres appareils de ta
     box (rare). Utilise-la le moins possible.
+  * Mode Famille (VirtualBox) : même principe, mais VirtualBox a eu un
+    peu plus de failles qu'Hyper-V au fil des années. Garde-le à jour.
   * Ce n'est PAS un outil pour jouer avec des virus connus. C'est un
     filet de sécurité pour un fichier douteux.
 
@@ -268,7 +287,9 @@ foreach ($r in $Raccourcis) {
         $lnk.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Lanceur`" -Profil $($r.Profil)"
         $lnk.WorkingDirectory = $Racine
         $lnk.WindowStyle = 7
+        $IconeVBox = Join-Path $env:ProgramFiles 'Oracle\VirtualBox\VirtualBox.exe'
         if (Test-Path $Exe) { $lnk.IconLocation = "$Exe,0" }
+        elseif (Test-Path $IconeVBox) { $lnk.IconLocation = "$IconeVBox,0" }
     } else {
         $lnk.TargetPath = $r.Dossier
     }
@@ -279,7 +300,8 @@ Ecrire-Journal "  Raccourcis du bureau : OK ($Bureau)"
 
 # --- 5. État de la fonctionnalité
 if (Test-Path $Exe) { Ecrire-Journal "  Windows Sandbox : installé" }
-else { Ecrire-Journal "  Windows Sandbox : PAS encore activé (voir LISEZ-MOI, partie 4)" }
+elseif (Test-Path (Join-Path $env:ProgramFiles 'Oracle\VirtualBox\VBoxManage.exe')) { Ecrire-Journal "  Mode Famille : VirtualBox installé (machine préparée par Installer.bat)" }
+else { Ecrire-Journal "  Bac à sable : PAS encore installé (double-clique sur Installer.bat)" }
 
 # --- 6. Bilan de sécurité du PC (lecture seule, ne modifie rien)
 Ecrire-Journal "--- Bilan de sécurité du PC ---"
