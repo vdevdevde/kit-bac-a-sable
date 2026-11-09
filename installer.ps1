@@ -22,7 +22,10 @@ function Stop-Installation([string]$t) { Write-Host ''; Write-Host $t -Foregroun
 Titre 'Vérification du PC'
 $os = Get-CimInstance Win32_OperatingSystem
 Write-Host "  Windows : $($os.Caption)"
-if ($os.Caption -match 'Famille|Home' -or @(98, 99, 100, 101) -contains [int]$os.OperatingSystemSKU) {
+# EditionID ne dépend pas de la langue : Core* = Windows Famille (Home), sans bac à sable.
+$Edition = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction SilentlyContinue).EditionID
+Write-Host "  Édition : $Edition"
+if ($Edition -like 'Core*' -or $os.Caption -match 'Famille|Home|Domestique' -or @(98, 99, 100, 101) -contains [int]$os.OperatingSystemSKU) {
     Stop-Installation "Windows Famille (Home) ne contient pas le bac à sable.`nIl faut Windows 10/11 Pro, Entreprise ou Éducation. Installation arrêtée."
 }
 $cs  = Get-CimInstance Win32_ComputerSystem

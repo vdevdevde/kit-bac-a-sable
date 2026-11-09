@@ -16,7 +16,7 @@
 # ====================================================================
 param([switch]$Rapide, [switch]$SansMaj)
 
-$VersionKit = '1.3.0'
+$VersionKit = '1.4.0'
 
 # Copier-coller entre ton PC et le bac à sable : 'Disable' (le plus sûr) ou 'Enable'.
 # Activé, un programme dans le bac à sable peut lire ce que tu copies sur ton vrai PC
@@ -155,8 +155,11 @@ Une seule fenêtre de bac à sable peut être ouverte à la fois.
   * "Le fichier .wsb ne s'ouvre avec rien" ou "fonctionnalité absente" :
     la fonctionnalité n'est pas activée. Double-clique sur
     "Installer.bat", clique sur Oui, puis redémarre le PC.
-  * Windows Famille (Home) : le bac à sable n'existe PAS sur cette
-    édition. Il faut Windows 10/11 Pro, Entreprise ou Éducation.
+  * Message "Le nom de fonctionnalité Containers-DisposableClientVM est
+    inconnu" ou "IMPOSSIBLE" : c'est Windows Famille (Home). Le bac à
+    sable n'existe PAS sur cette édition et ne peut pas y être ajouté.
+    Il faut Windows 10/11 Pro, Entreprise ou Éducation (Paramètres >
+    Système > Activation pour passer à Pro, payant).
   * Message sur la virtualisation : elle doit être activée dans le BIOS.
     Au démarrage du PC, appuie sur Suppr (ou F2) pour entrer dans le BIOS,
     passe en mode avancé, puis cherche :
