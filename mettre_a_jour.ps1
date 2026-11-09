@@ -16,7 +16,7 @@
 # ====================================================================
 param([switch]$Rapide, [switch]$SansMaj)
 
-$VersionKit = '1.5.0'
+$VersionKit = '1.6.0'
 
 # Copier-coller entre ton PC et le bac à sable : 'Disable' (le plus sûr) ou 'Enable'.
 # Activé, un programme dans le bac à sable peut lire ce que tu copies sur ton vrai PC
@@ -123,8 +123,9 @@ Une seule fenêtre de bac à sable peut être ouverte à la fois.
   * Si la machine demande un mot de passe : bacasable
   * Pour fermer : croix de la fenêtre -> "Éteindre la machine".
     Dès qu'elle est éteinte, tout est effacé (retour à l'état propre).
-  * VirtualBox doit rester À JOUR : le raccourci refuse de lancer s'il
-    est en retard (sauf si tu insistes).
+  * VirtualBox doit rester À JOUR : s'il est en retard, le raccourci
+    propose de le mettre à jour tout seul (clique Oui). Le fichier est
+    pris sur le site officiel et vérifié (empreinte + signature Oracle).
   * La machine Windows est une version d'évaluation de Microsoft
     (90 jours). Quand elle expire : relance Installer.bat, réponds O
     pour supprimer l'ancienne machine, et elle est recréée.

@@ -10,7 +10,7 @@ Le kit se **met à jour tout seul** : à chaque ouverture, il te propose la nouv
 
 - **N'importe quel Windows 10 ou 11**, Famille compris :
   - **Pro, Entreprise, Éducation** : le kit utilise **Windows Sandbox**, intégré à Windows.
-  - **Famille (Home)** : le kit utilise le **mode Famille**, un Windows jetable dans **VirtualBox** (gratuit). L'installeur te guide pour installer VirtualBox et télécharger l'image Windows 11 d'évaluation gratuite de Microsoft, puis prépare tout seul la machine (30 à 90 minutes, une seule fois). 🧪 *Mode encore en test.*
+  - **Famille (Home)** : le kit utilise le **mode Famille**, un Windows jetable dans **VirtualBox** (gratuit). L'installeur **installe VirtualBox tout seul** (site officiel, fichier vérifié). Il t'ouvre aussi la page de Microsoft pour télécharger l'image Windows 11 d'évaluation gratuite (un formulaire à remplir), la retrouve tout seul dans tes Téléchargements, puis prépare la machine (30 à 90 minutes, une seule fois). 🧪 *Mode encore en test.*
 - La **virtualisation activée** dans le BIOS (c'est le cas sur la plupart des PC récents ; l'installeur vérifie).
 - Mode Famille : 8 Go de mémoire et 40 Go libres sur C:.
 
@@ -49,7 +49,7 @@ Mode d'emploi complet : `LISEZ-MOI.txt`, créé par l'installeur dans le dossier
 
 - Avant **chaque** lancement, les réglages sont **recréés et vérifiés**. Si l'un d'eux n'est pas sûr, le bac à sable ne s'ouvre pas.
 - **Mode Famille** : la machine revient à son état propre avant et après chaque utilisation. Mêmes réglages : pas de réseau, copier-coller, glisser-déposer, son, USB et bureau à distance coupés, `A_tester` en lecture seule.
-- **Windows et VirtualBox doivent être à jour** : sinon, le raccourci refuse de lancer (sauf si tu insistes), car ces mises à jour corrigent les failles qui permettraient à un virus de sortir.
+- **Windows et VirtualBox doivent être à jour**, car ces mises à jour corrigent les failles qui permettraient à un virus de sortir. Si VirtualBox est en retard, le raccourci propose de le mettre à jour tout seul. Si Windows est en retard, il refuse de lancer (sauf si tu insistes).
 - **Mise à jour automatique avec ton accord** : le kit vérifie GitHub, mais n'installe rien sans que tu cliques **Oui**. Il remplace seulement ses propres fichiers, et l'ancienne version est gardée dans `_sauvegardes\`.
 - **Bilan de sécurité** : `Mettre a jour.bat` vérifie ton antivirus, ton pare-feu, l'UAC, l'isolation matérielle et les mises à jour Windows, **sans rien modifier**.
 

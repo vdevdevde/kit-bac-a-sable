@@ -28,6 +28,11 @@ function Trouver-VBoxManage {
     return $null
 }
 
+function Version-VBox([string]$exe) {
+    $l = (& $exe --version 2>$null) | Where-Object { "$_" -match '^\d+\.\d+\.\d+' } | Select-Object -First 1
+    if ($l) { return [version]("$l" -replace '^(\d+\.\d+\.\d+).*$', '$1') } else { return $null }
+}
+
 # Vérifie les réglages de la machine virtuelle. Renvoie la liste des problèmes (vide = sûr).
 # $machine : sortie de "showvminfo --machinereadable" ; $humain : sortie de "showvminfo".
 function Verifier-VM([string[]]$machine, [string]$humain, [string]$profil, [string]$dossier) {
@@ -91,12 +96,19 @@ if ($Mode -eq 'VirtualBox') {
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $derniere = [version]((Invoke-WebRequest 'https://download.virtualbox.org/virtualbox/LATEST.TXT' -UseBasicParsing -TimeoutSec 6).Content.Trim())
-        $installee = [version](((& $VBoxManage --version) -replace '^(\d+\.\d+\.\d+).*$', '$1'))
-        if ($installee -lt $derniere) {
-            $rep = Fenetre ("DANGER : VirtualBox n'est pas à jour (tu as $installee, la dernière est $derniere).`n`n" +
+        $installee = Version-VBox $VBoxManage
+        if ($installee -and $installee -lt $derniere) {
+            $rep = Fenetre ("VirtualBox n'est pas à jour (tu as $installee, la dernière est $derniere).`n`n" +
                 "Les mises à jour de VirtualBox corrigent les failles qui permettraient à un virus de sortir de la machine.`n`n" +
-                "Installe la dernière version depuis virtualbox.org, puis relance.`n`nLancer quand même (déconseillé) ?") 'YesNo' 'Error' 'Button2'
-            if ($rep -ne 'Yes') { Start-Process 'https://www.virtualbox.org/wiki/Downloads'; exit 3 }
+                "Mettre à jour maintenant ? (recommandé, quelques minutes, tout est automatique)") 'YesNo' 'Warning'
+            if ($rep -eq 'Yes') {
+                Start-Process powershell -Wait -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$(Join-Path $Racine 'installer.ps1')`" -MajVirtualBox"
+                $installee = Version-VBox $VBoxManage
+            }
+            if (-not $installee -or $installee -lt $derniere) {
+                $rep = Fenetre ("DANGER : VirtualBox n'est toujours pas à jour.`n`nLancer quand même (déconseillé) ?") 'YesNo' 'Error' 'Button2'
+                if ($rep -ne 'Yes') { exit 3 }
+            }
         }
     } catch { }   # pas d'internet : on ne bloque pas
 }

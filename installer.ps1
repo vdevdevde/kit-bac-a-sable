@@ -6,10 +6,69 @@
 #    jetable avec VirtualBox (gratuit). Mêmes protections : pas d'internet,
 #    pas de copier-coller, A_tester en lecture seule, et tout est effacé
 #    à chaque fermeture (retour à un "instantané" propre).
+#
+#  -MajVirtualBox : seulement installer / mettre à jour VirtualBox
+#                   (utilisé par lancer.ps1 quand VirtualBox est en retard).
 # ====================================================================
+param([switch]$MajVirtualBox)
+
 $Racine = $PSScriptRoot
 $ATester = Join-Path $Racine 'A_tester'
 $NomVM = 'BacASable'
+
+function Trouver-VBoxManage {
+    $dir = (Get-ItemProperty 'HKLM:\SOFTWARE\Oracle\VirtualBox' -ErrorAction SilentlyContinue).InstallDir
+    foreach ($d in @($dir, (Join-Path $env:ProgramFiles 'Oracle\VirtualBox'))) {
+        if ($d) { $p = Join-Path $d 'VBoxManage.exe'; if (Test-Path $p) { return $p } }
+    }
+    return $null
+}
+function Version-VBox([string]$exe) {
+    $l = (& $exe --version 2>$null) | Where-Object { "$_" -match '^\d+\.\d+\.\d+' } | Select-Object -First 1
+    if ($l) { return [version]("$l" -replace '^(\d+\.\d+\.\d+).*$', '$1') } else { return $null }
+}
+function Verifier-Signature([string]$fichier, [string]$editeur) {
+    $s = Get-AuthenticodeSignature -FilePath $fichier
+    if ($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch [regex]::Escape($editeur)) {
+        throw "la signature de $(Split-Path $fichier -Leaf) n'est pas valide (attendu : $editeur) : installation annulée"
+    }
+}
+# Télécharge VirtualBox depuis le site OFFICIEL, vérifie l'empreinte officielle (SHA256)
+# et la signature d'Oracle, puis lance l'installation. Rien n'est lancé si un contrôle échoue.
+function Installer-VirtualBox {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $base = 'https://download.virtualbox.org/virtualbox'
+    $ver = (Invoke-WebRequest "$base/LATEST.TXT" -UseBasicParsing -TimeoutSec 30).Content.Trim()
+    if ($ver -notmatch '^\d+\.\d+\.\d+$') { throw "numéro de version inattendu : $ver" }
+    $sommes = (Invoke-WebRequest "$base/$ver/SHA256SUMS" -UseBasicParsing -TimeoutSec 30).Content
+    $ligne = ($sommes -split "`n") | Where-Object { $_ -match "^[0-9a-f]{64}\s+\*?VirtualBox-$([regex]::Escape($ver))-\d+-Win\.exe\s*$" } | Select-Object -First 1
+    if (-not ($ligne -match '^([0-9a-f]{64})\s+\*?(\S+)')) { throw "installeur Windows introuvable pour VirtualBox $ver" }
+    $empreinte = $Matches[1]; $nom = $Matches[2]
+    $tmp = Join-Path $env:TEMP ('BacASable_vbox_' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $tmp | Out-Null
+    try {
+        Write-Host '  Téléchargement de Visual C++ (Microsoft, nécessaire à VirtualBox)...'
+        $vc = Join-Path $tmp 'vc_redist.x64.exe'
+        Invoke-WebRequest 'https://aka.ms/vs/17/release/vc_redist.x64.exe' -OutFile $vc -UseBasicParsing -TimeoutSec 600
+        Verifier-Signature $vc 'Microsoft Corporation'
+        Write-Host '  Installation de Visual C++ : Windows va demander "Oui".' -ForegroundColor Yellow
+        Start-Process $vc -ArgumentList '/install', '/quiet', '/norestart' -Verb RunAs -Wait
+
+        Write-Host "  Téléchargement de VirtualBox $ver (environ 170 Mo, quelques minutes)..."
+        $exe = Join-Path $tmp $nom
+        Invoke-WebRequest "$base/$ver/$nom" -OutFile $exe -UseBasicParsing -TimeoutSec 1800
+        if ((Get-FileHash $exe -Algorithm SHA256).Hash.ToLower() -ne $empreinte) {
+            throw 'le fichier téléchargé ne correspond pas à l''empreinte officielle (abîmé ou modifié) : installation annulée'
+        }
+        Verifier-Signature $exe 'Oracle'
+        Write-Host '  Fichier vérifié : empreinte officielle + signature Oracle. Installation...' -ForegroundColor Green
+        Write-Host '  Clique sur Suivant / Oui / Installer. Si on te propose d''installer un "périphérique" Oracle : Installer.' -ForegroundColor Yellow
+        Write-Host '  (Un message sur "Python" peut apparaître : clique Oui, ce n''est pas nécessaire.)'
+        Start-Process $exe -Wait
+    } finally {
+        Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
 
 # Les fichiers extraits d'un .zip téléchargé portent la marque « vient d'internet » :
 # Windows redemanderait une confirmation à chaque double-clic. Tu as lancé cet
@@ -23,6 +82,15 @@ foreach ($f in 'mettre_a_jour.ps1', 'Mettre a jour.bat', 'maj_auto.ps1', 'lancer
 
 function Titre([string]$t) { Write-Host ''; Write-Host "== $t ==" -ForegroundColor Cyan }
 function Stop-Installation([string]$t) { Write-Host ''; Write-Host $t -ForegroundColor Red; exit 1 }
+
+# --- Mode "mise à jour de VirtualBox seulement" (appelé par lancer.ps1)
+if ($MajVirtualBox) {
+    Titre 'Mise à jour de VirtualBox'
+    try { Installer-VirtualBox; Write-Host '  VirtualBox est à jour.' -ForegroundColor Green }
+    catch { Write-Host "  Échec : $($_.Exception.Message)" -ForegroundColor Red }
+    Read-Host '  Appuie sur Entrée pour fermer'
+    exit 0
+}
 
 # ---------------------------------------------------------------- PC
 Titre 'Vérification du PC'
@@ -82,13 +150,6 @@ Write-Host '  Windows Famille ne contient pas le bac à sable de Microsoft.'
 Write-Host '  On crée à la place un Windows jetable dans VirtualBox (gratuit), avec les'
 Write-Host '  mêmes protections. Première installation : 30 à 90 minutes, une seule fois.'
 
-function Trouver-VBoxManage {
-    $dir = (Get-ItemProperty 'HKLM:\SOFTWARE\Oracle\VirtualBox' -ErrorAction SilentlyContinue).InstallDir
-    foreach ($d in @($dir, (Join-Path $env:ProgramFiles 'Oracle\VirtualBox'))) {
-        if ($d) { $p = Join-Path $d 'VBoxManage.exe'; if (Test-Path $p) { return $p } }
-    }
-    return $null
-}
 function VBox {
     & $script:VBoxManage @args
     if ($LASTEXITCODE -ne 0) { throw "VBoxManage $($args -join ' ') a échoué (code $LASTEXITCODE)" }
@@ -100,19 +161,17 @@ function Etat-VM {
 
 # --- 1. VirtualBox installé et récent ?
 $VBoxManage = Trouver-VBoxManage
-if (-not $VBoxManage) {
+$VersionVBox = if ($VBoxManage) { Version-VBox $VBoxManage } else { $null }
+if (-not $VBoxManage -or -not $VersionVBox -or $VersionVBox -lt [version]'7.0.0') {
     Write-Host ''
-    Write-Host '  Étape 1 : installe VirtualBox (je t''ouvre la page officielle).' -ForegroundColor Yellow
-    Write-Host '  Clique sur "Windows hosts", installe-le (Suivant, Suivant... Oui), puis relance Installer.bat.'
-    Start-Process 'https://www.virtualbox.org/wiki/Downloads'
-    exit 1
+    Write-Host '  Étape 1 : installation automatique de VirtualBox (site officiel, fichier vérifié).' -ForegroundColor Yellow
+    try { Installer-VirtualBox }
+    catch { Stop-Installation "Installation de VirtualBox impossible : $($_.Exception.Message)`nVérifie ta connexion internet, puis relance Installer.bat." }
+    $VBoxManage = Trouver-VBoxManage
+    $VersionVBox = if ($VBoxManage) { Version-VBox $VBoxManage } else { $null }
+    if (-not $VBoxManage -or -not $VersionVBox) { Stop-Installation 'VirtualBox ne semble pas installé (installation annulée ?). Relance Installer.bat.' }
 }
-$VersionVBox = [version](((& $VBoxManage --version) -replace '^(\d+\.\d+\.\d+).*$', '$1'))
 Write-Host "  VirtualBox : $VersionVBox"
-if ($VersionVBox -lt [version]'7.0.0') {
-    Start-Process 'https://www.virtualbox.org/wiki/Downloads'
-    Stop-Installation 'VirtualBox est trop ancien (il faut la version 7 ou plus). Installe la dernière version, puis relance Installer.bat.'
-}
 
 # --- 2. Machine déjà prête ?
 $vms = & $VBoxManage list vms
@@ -151,17 +210,36 @@ if ($cs.HypervisorPresent) {
 # --- 4. Image de Windows (.iso)
 Write-Host ''
 Write-Host '  Étape 2 : il faut une image de Windows 11 (fichier .iso, environ 5 Go).' -ForegroundColor Yellow
-Write-Host '  Prends la version GRATUITE et légale de Microsoft : "Windows 11 Entreprise (évaluation)".'
-Write-Host '  Je t''ouvre la page : remplis le formulaire, choisis "ISO - Entreprise", 64 bits, Français.'
-Start-Process 'https://www.microsoft.com/fr-fr/evalcenter/evaluate-windows-11-enterprise'
-Read-Host '  Quand le fichier .iso est téléchargé, appuie sur Entrée pour le choisir'
-Add-Type -AssemblyName System.Windows.Forms
-$dlg = New-Object System.Windows.Forms.OpenFileDialog
-$dlg.Title = 'Choisis le fichier .iso de Windows 11'
-$dlg.Filter = 'Image Windows (*.iso)|*.iso'
-$dlg.InitialDirectory = Join-Path $env:USERPROFILE 'Downloads'
-if ($dlg.ShowDialog() -ne 'OK') { Stop-Installation 'Aucun fichier choisi. Relance Installer.bat quand tu as le .iso.' }
-$Iso = $dlg.FileName
+$Telechargements = try { (New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path } catch { Join-Path $env:USERPROFILE 'Downloads' }
+function Chercher-Iso {
+    Get-ChildItem $Telechargements -Filter *.iso -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match 'win' -and $_.Length -gt 3GB } |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+}
+$Iso = $null
+$trouve = Chercher-Iso
+if ($trouve) {
+    Write-Host "  Image trouvée : $($trouve.Name)"
+    if ((Read-Host '  Utiliser ce fichier ? (O/N)') -match '^[oOyY]') { $Iso = $trouve.FullName }
+}
+if (-not $Iso) {
+    Write-Host '  Prends la version GRATUITE et légale de Microsoft : "Windows 11 Entreprise (évaluation)".'
+    Write-Host '  Je t''ouvre la page : remplis le formulaire, puis choisis "ISO - Entreprise", 64 bits, Français.'
+    Write-Host '  Laisse le fichier dans Téléchargements : je le trouverai tout seul.'
+    Start-Process 'https://www.microsoft.com/fr-fr/evalcenter/evaluate-windows-11-enterprise'
+    Read-Host '  Quand le téléchargement est TERMINÉ, appuie sur Entrée'
+    $trouve = Chercher-Iso
+    if ($trouve) { $Iso = $trouve.FullName }
+    else {
+        Add-Type -AssemblyName System.Windows.Forms
+        $dlg = New-Object System.Windows.Forms.OpenFileDialog
+        $dlg.Title = 'Choisis le fichier .iso de Windows 11'
+        $dlg.Filter = 'Image Windows (*.iso)|*.iso'
+        $dlg.InitialDirectory = $Telechargements
+        if ($dlg.ShowDialog() -ne 'OK') { Stop-Installation 'Aucun fichier choisi. Relance Installer.bat quand tu as le .iso.' }
+        $Iso = $dlg.FileName
+    }
+}
 Write-Host "  Image : $Iso"
 
 # --- 5. Création de la machine, réglée au plus sûr
