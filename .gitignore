@@ -1,0 +1,11 @@
+# Jamais sur GitHub :
+# - les fichiers à tester (potentiellement dangereux)
+A_tester/
+# - ce qui est propre à chaque PC (sauvegardes, journal, liste perso, rapport perso)
+_sauvegardes/
+journal.txt
+interdits.txt
+RAPPORT_PERSONNEL.md
+# - les fichiers recréés par le kit sur chaque PC (ils contiennent le chemin du PC)
+*.wsb
+LISEZ-MOI.txt
