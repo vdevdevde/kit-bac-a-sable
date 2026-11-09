@@ -10,7 +10,7 @@
 # ====================================================================
 param([switch]$Silencieux)
 
-$Depot  = 'vdevdevde/bac-a-sable-windows'
+$Depot  = 'vdevdevde/kit-bac-a-sable'
 $Racine = $PSScriptRoot
 $FichiersDuKit = @(
     'mettre_a_jour.ps1', 'Mettre a jour.bat', 'maj_auto.ps1', 'lancer.ps1',
